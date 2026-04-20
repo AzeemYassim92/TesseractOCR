@@ -4,3 +4,4 @@ opencv-python
 pytesseract
 keyboard
 Pillow
+pyautogui

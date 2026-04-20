@@ -12,6 +12,7 @@ from watcher.preprocess import preprocess_for_ocr
 from watcher.ocr_reader import read_digit_components, read_digits, read_text
 from watcher.parser import parse_stat_pair
 from watcher.triggers import TriggerController
+from watcher.warehouse import WarehouseRunner
 
 
 def stable_value(history: deque):
@@ -111,50 +112,55 @@ def parse_stat_from_images(raw_image: np.ndarray, preprocessed_image: np.ndarray
 def main() -> None:
     capturer = ScreenCapture()
     trigger = TriggerController()
+    warehouse = WarehouseRunner()
+    warehouse.install_hotkeys()
 
     hp_history = deque(maxlen=TIMINGS.stable_reads_required)
     mp_history = deque(maxlen=TIMINGS.stable_reads_required)
 
     print("Starting OCR stat watcher. Press Ctrl+C to stop.")
 
-    while True:
-        hp_raw = capturer.grab_region(HP_REGION)
-        mp_raw = capturer.grab_region(MP_REGION)
-        save_debug_image("hp_raw.png", hp_raw)
-        save_debug_image("mp_raw.png", mp_raw)
+    try:
+        while True:
+            hp_raw = capturer.grab_region(HP_REGION)
+            mp_raw = capturer.grab_region(MP_REGION)
+            save_debug_image("hp_raw.png", hp_raw)
+            save_debug_image("mp_raw.png", mp_raw)
 
-        hp_pre = preprocess_for_ocr(hp_raw, OCR.upscale_factor, OCR.threshold_value)
-        mp_pre = preprocess_for_ocr(mp_raw, OCR.upscale_factor, OCR.threshold_value)
-        save_debug_image("hp_pre.png", hp_pre)
-        save_debug_image("mp_pre.png", mp_pre)
+            hp_pre = preprocess_for_ocr(hp_raw, OCR.upscale_factor, OCR.threshold_value)
+            mp_pre = preprocess_for_ocr(mp_raw, OCR.upscale_factor, OCR.threshold_value)
+            save_debug_image("hp_pre.png", hp_pre)
+            save_debug_image("mp_pre.png", mp_pre)
 
-        hp_pair, hp_source, hp_text = parse_stat_from_images(hp_raw, hp_pre, "hp")
-        mp_pair, mp_source, mp_text = parse_stat_from_images(mp_raw, mp_pre, "mp")
+            hp_pair, hp_source, hp_text = parse_stat_from_images(hp_raw, hp_pre, "hp")
+            mp_pair, mp_source, mp_text = parse_stat_from_images(mp_raw, mp_pre, "mp")
 
-        print(
-            f"HP OCR={hp_text!r} parsed={hp_pair} source={hp_source} | "
-            f"MP OCR={mp_text!r} parsed={mp_pair} source={mp_source}"
-        )
+            print(
+                f"HP OCR={hp_text!r} parsed={hp_pair} source={hp_source} | "
+                f"MP OCR={mp_text!r} parsed={mp_pair} source={mp_source}"
+            )
 
-        if hp_pair is not None:
-            hp_history.append(hp_pair)
-        else:
-            hp_history.clear()
+            if hp_pair is not None:
+                hp_history.append(hp_pair)
+            else:
+                hp_history.clear()
 
-        if mp_pair is not None:
-            mp_history.append(mp_pair)
-        else:
-            mp_history.clear()
+            if mp_pair is not None:
+                mp_history.append(mp_pair)
+            else:
+                mp_history.clear()
 
-        stable_hp = stable_value(hp_history)
-        stable_mp = stable_value(mp_history)
+            stable_hp = stable_value(hp_history)
+            stable_mp = stable_value(mp_history)
 
-        hp_current = stable_hp[0] if stable_hp is not None else None
-        mp_current = stable_mp[0] if stable_mp is not None else None
-        if hp_current is not None or mp_current is not None:
-            trigger.evaluate(hp_current=hp_current, mp_current=mp_current)
+            hp_current = stable_hp[0] if stable_hp is not None else None
+            mp_current = stable_mp[0] if stable_mp is not None else None
+            if hp_current is not None or mp_current is not None:
+                trigger.evaluate(hp_current=hp_current, mp_current=mp_current)
 
-        time.sleep(TIMINGS.poll_interval_seconds)
+            time.sleep(TIMINGS.poll_interval_seconds)
+    finally:
+        warehouse.uninstall_hotkeys()
 
 
 if __name__ == "__main__":
