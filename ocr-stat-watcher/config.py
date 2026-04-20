@@ -1,4 +1,8 @@
 from dataclasses import dataclass
+from pathlib import Path
+
+
+ROOT_DIR = Path(__file__).resolve().parent
 
 
 @dataclass(frozen=True)
@@ -34,7 +38,7 @@ class CaptureConfig:
 @dataclass(frozen=True)
 class WarehouseConfig:
     enabled: bool = True
-    run_all_hotkey: str = "k"
+    run_all_hotkey: str = "e"
     stop_hotkey: str = "l"
     clicks_per_slot: int = 2
     click_interval_seconds: float = 0.03
@@ -118,6 +122,19 @@ class ActionKeys:
     mp_key: str = "x"
 
 
+@dataclass(frozen=True)
+class HotkeyConfig:
+    auto_targeting_toggle_hotkey: str = "w"
+    ocr_actions_toggle_hotkey: str = "r"
+    profile_status_hotkey: str = "t"
+
+
+@dataclass(frozen=True)
+class ProfileConfig:
+    profiles_dir: Path = ROOT_DIR / "profiles"
+    default_profile: str = "main"
+
+
 THRESHOLDS = Thresholds()
 TIMINGS = Timings()
 OCR = OCRConfig()
@@ -125,3 +142,5 @@ KEYS = ActionKeys()
 CAPTURE = CaptureConfig()
 WAREHOUSE = WarehouseConfig()
 LOOT = LootConfig()
+HOTKEYS = HotkeyConfig()
+PROFILES = ProfileConfig()

@@ -2,15 +2,18 @@ import time
 from collections import deque
 
 import cv2
+import keyboard
 import numpy as np
 
-from config import OCR, TIMINGS
+from AutoTargeting.controller import AutoTargetingController
+from config import HOTKEYS, OCR, TIMINGS
 from regions import HP_REGION, MP_REGION
 from watcher.capture import ScreenCapture
 from watcher.debug import save_debug_image
 from watcher.preprocess import preprocess_for_ocr
 from watcher.ocr_reader import read_digit_components, read_digits, read_text
 from watcher.parser import parse_stat_pair
+from watcher.profiles import build_profile_parser, format_profile_summary, load_profile
 from watcher.triggers import TriggerController
 from watcher.warehouse import WarehouseRunner
 
@@ -110,15 +113,36 @@ def parse_stat_from_images(raw_image: np.ndarray, preprocessed_image: np.ndarray
 
 
 def main() -> None:
+    parser = build_profile_parser()
+    args = parser.parse_args()
+    profile_name, thresholds = load_profile(args.profile)
+
     capturer = ScreenCapture()
-    trigger = TriggerController()
+    trigger = TriggerController(thresholds=thresholds)
     warehouse = WarehouseRunner()
+    auto_targeting = AutoTargetingController()
+    hotkey_handles = []
+
     warehouse.install_hotkeys()
+    hotkey_handles.extend(
+        [
+            keyboard.add_hotkey(HOTKEYS.auto_targeting_toggle_hotkey, auto_targeting.toggle),
+            keyboard.add_hotkey(HOTKEYS.ocr_actions_toggle_hotkey, trigger.toggle_actions_enabled),
+            keyboard.add_hotkey(
+                HOTKEYS.profile_status_hotkey,
+                lambda: print(format_profile_summary(profile_name, thresholds)),
+            ),
+        ]
+    )
 
     hp_history = deque(maxlen=TIMINGS.stable_reads_required)
     mp_history = deque(maxlen=TIMINGS.stable_reads_required)
 
     print("Starting OCR stat watcher. Press Ctrl+C to stop.")
+    print(format_profile_summary(profile_name, thresholds))
+    print(f"AutoTargeting hotkey: press {HOTKEYS.auto_targeting_toggle_hotkey!r} to toggle targeting.")
+    print(f"OCR action hotkey: press {HOTKEYS.ocr_actions_toggle_hotkey!r} to pause/resume z/x actions.")
+    print(f"Profile status hotkey: press {HOTKEYS.profile_status_hotkey!r} to print the active profile.")
 
     try:
         while True:
@@ -160,6 +184,9 @@ def main() -> None:
 
             time.sleep(TIMINGS.poll_interval_seconds)
     finally:
+        auto_targeting.shutdown()
+        for hotkey_handle in hotkey_handles:
+            keyboard.remove_hotkey(hotkey_handle)
         warehouse.uninstall_hotkeys()
 
 

@@ -10,6 +10,8 @@ cd C:\Repos\2026\tesseract\ocr-stat-watcher
 python -m AutoTargeting.runner
 ```
 
+AutoTargeting can also be toggled from the main OCR watcher with `W`.
+
 ## Folders
 
 - `images/`: put monster/object template images here.

@@ -1,0 +1,6 @@
+{
+  "hp_trigger_at_or_below": 550,
+  "hp_reset_above": 650,
+  "mp_trigger_at_or_below": 200,
+  "mp_reset_above": 350
+}

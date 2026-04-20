@@ -1,7 +1,7 @@
 import ctypes
 import time
 import keyboard
-from config import KEYS, THRESHOLDS, TIMINGS
+from config import KEYS, THRESHOLDS, TIMINGS, Thresholds
 
 
 INPUT_KEYBOARD = 1
@@ -30,11 +30,24 @@ class INPUT(ctypes.Structure):
 
 
 class TriggerController:
-    def __init__(self) -> None:
+    def __init__(self, thresholds: Thresholds = THRESHOLDS) -> None:
+        self._thresholds = thresholds
+        self._actions_enabled = True
         self._last_action_times = {
             KEYS.hp_key: 0.0,
             KEYS.mp_key: 0.0,
         }
+
+    def set_actions_enabled(self, enabled: bool) -> None:
+        self._actions_enabled = enabled
+        state = "ON" if enabled else "OFF"
+        print(f"OCR ACTIONS: {state}")
+
+    def toggle_actions_enabled(self) -> None:
+        self.set_actions_enabled(not self._actions_enabled)
+
+    def actions_enabled(self) -> bool:
+        return self._actions_enabled
 
     def _can_fire(self, key: str) -> bool:
         return (time.time() - self._last_action_times[key]) >= TIMINGS.action_cooldown_seconds
@@ -124,6 +137,8 @@ class TriggerController:
             raise OSError(f"Unicode SendInput failed for key {key!r}: down={sent_down}, up={sent_up}")
 
     def _fire(self, key: str, reason: str) -> None:
+        if not self._actions_enabled:
+            return
         if not self._can_fire(key):
             return
         self._send_key(key)
@@ -132,12 +147,12 @@ class TriggerController:
 
     def evaluate(self, hp_current: int | None = None, mp_current: int | None = None) -> None:
         if hp_current is not None:
-            if hp_current <= THRESHOLDS.hp_trigger_at_or_below:
-                self._fire(KEYS.hp_key, f"hp <= {THRESHOLDS.hp_trigger_at_or_below} (hp={hp_current})")
+            if hp_current <= self._thresholds.hp_trigger_at_or_below:
+                self._fire(KEYS.hp_key, f"hp <= {self._thresholds.hp_trigger_at_or_below} (hp={hp_current})")
 
         if mp_current is not None:
-            if mp_current <= THRESHOLDS.mp_trigger_at_or_below:
+            if mp_current <= self._thresholds.mp_trigger_at_or_below:
                 self._fire(
                     KEYS.mp_key,
-                    f"mp <= {THRESHOLDS.mp_trigger_at_or_below} (mp={mp_current})"
+                    f"mp <= {self._thresholds.mp_trigger_at_or_below} (mp={mp_current})"
                 )
