@@ -71,9 +71,17 @@ class AutoTargetingController:
         self.stop()
 
     def _run_loop(self) -> None:
-        while not self._stop_requested.is_set():
-            self.tick()
-            self._stop_requested.wait(max(0.01, CONFIG.loop_interval_seconds))
+        try:
+            while not self._stop_requested.is_set():
+                self.tick()
+                self._stop_requested.wait(max(0.01, CONFIG.loop_interval_seconds))
+        except Exception as exc:
+            print(f"AUTOTARGET ERROR: {exc}")
+        finally:
+            with self._lock:
+                self._enabled = False
+                self._stop_requested.set()
+            print("AUTOTARGET: stopped")
 
     def tick(self) -> None:
         now = time.monotonic()

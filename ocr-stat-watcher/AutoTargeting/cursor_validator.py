@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+import threading
 
 import cv2
 import mss
@@ -20,7 +21,8 @@ class CursorValidator:
     def __init__(self) -> None:
         CONFIG.cursor_templates_dir.mkdir(parents=True, exist_ok=True)
         self._templates = _load_cursor_templates()
-        self._sct = mss.mss()
+        self._sct = None
+        self._thread_id = None
 
     @property
     def template_count(self) -> int:
@@ -59,8 +61,15 @@ class CursorValidator:
             "width": size,
             "height": size,
         }
-        image = np.array(self._sct.grab(monitor))
+        image = np.array(self._capture_for_current_thread().grab(monitor))
         return cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+
+    def _capture_for_current_thread(self):
+        thread_id = threading.get_ident()
+        if self._sct is None or self._thread_id != thread_id:
+            self._sct = mss.mss()
+            self._thread_id = thread_id
+        return self._sct
 
 
 def _load_cursor_templates() -> list[tuple[str, np.ndarray]]:
