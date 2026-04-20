@@ -12,6 +12,7 @@ class AutoTargetingConfig:
     # Regions are relative to the captured combat frame: x, y, width, height.
     ignore_regions: tuple[tuple[int, int, int, int], ...] = ((897, 396, 115, 183),)
     images_dir: Path = ROOT_DIR / "images"
+    cursor_templates_dir: Path = ROOT_DIR / "cursor_templates"
     debug_dir: Path = ROOT_DIR / "debug"
     template_extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".bmp")
     template_confidence: float = 0.72
@@ -35,7 +36,14 @@ class AutoTargetingConfig:
     attack_enabled: bool = True
     attack_button: str = "right"
     attack_click_cooldown_seconds: float = 1.00
+    attack_repeat_clicks: int = 4
+    attack_repeat_interval_seconds: float = 0.55
+    attack_success_pause_seconds: float = 3.5
     attack_confirm_window_seconds: float = 1.0
+    cursor_validation_enabled: bool = True
+    cursor_validation_confidence: float = 0.62
+    cursor_validation_crop_size: int = 72
+    cursor_hover_seconds: float = 0.08
     player_activity_threshold: int = 18
     player_activity_min_pixels: int = 80
     rejected_target_cooldown_seconds: float = 20.0

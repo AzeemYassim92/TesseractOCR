@@ -27,7 +27,9 @@ def main() -> None:
     print(f"AutoTargeting {mode}. Press Ctrl+C to stop.")
     print(f"Combat region: {CONFIG.combat_region}")
     print(f"Template folder: {CONFIG.images_dir}")
+    print(f"Cursor template folder: {CONFIG.cursor_templates_dir}")
     print(f"Loaded templates: {len(templates)}")
+    print(f"Loaded cursor templates: {attacker.cursor_template_count}")
     print(f"Debug overlay: {CONFIG.debug_dir / 'latest_overlay.png'}")
 
     try:
@@ -57,15 +59,31 @@ def main() -> None:
             selected_target = select_attack_target(targets)
             clicked_at = None
             if selected_target is not None and pending_attack_target_id is None:
-                clicked_at = attacker.right_click_target(selected_target)
-                if clicked_at is not None:
+                attack_result = attacker.right_click_target(selected_target)
+                clicked_at = attack_result.screen_position
+                if attack_result.clicked and clicked_at is not None:
                     tracker.mark_attacked(selected_target.id)
                     pending_attack_target_id = selected_target.id
                     pending_attack_started_at = now
                     pending_player_activity = False
                     print(
                         f"ATTACK: right-clicked target#{selected_target.id} "
-                        f"at screen={clicked_at}"
+                        f"{attack_result.clicks_sent}x at screen={clicked_at} "
+                        f"cursor={attack_result.cursor_validation.label if attack_result.cursor_validation else None} "
+                        f"score={attack_result.cursor_validation.score if attack_result.cursor_validation else 0:.2f}"
+                    )
+                elif attack_result.reason == "missing_cursor_templates":
+                    print(
+                        "SKIP: cursor validation is enabled, but no cursor templates were found in "
+                        f"{CONFIG.cursor_templates_dir}"
+                    )
+                elif attack_result.reason == "cursor_not_validated":
+                    tracker.reject_target(selected_target.id)
+                    validation = attack_result.cursor_validation
+                    print(
+                        f"REJECTED: target#{selected_target.id} did not show attack cursor "
+                        f"score={validation.score if validation else 0:.2f} "
+                        f"crop={validation.crop_path if validation else None}"
                     )
             save_debug_images(frame, candidates, targets, selected_target)
 
