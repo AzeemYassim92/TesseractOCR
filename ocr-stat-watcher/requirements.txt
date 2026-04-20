@@ -1,3 +1,4 @@
+dxcam
 mss
 opencv-python
 pytesseract

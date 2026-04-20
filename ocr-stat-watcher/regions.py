@@ -1,15 +1,13 @@
-# Screen-space rectangles: left, top, width, height
-# Replace these with your actual coordinates.
 HP_REGION = {
-    "left": 90,
+    "left": 108,
     "top": 8,
-    "width": 115,
+    "width": 116,
     "height": 18,
 }
 
 MP_REGION = {
-    "left": 90,
-    "top": 31,
-    "width": 115,
-    "height": 18,
+    "left": 108,
+    "top": 28,
+    "width": 116,
+    "height": 15,
 }
