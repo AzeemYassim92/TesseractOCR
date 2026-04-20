@@ -50,7 +50,7 @@ def read_digit_components(image) -> str:
         crop = cv2.copyMakeBorder(crop, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=0)
 
         digit_text = ""
-        for psm in (10, 13, 8, 7):
+        for psm in (13, 8, 6, 10, 7):
             config = f"--psm {psm} -c tessedit_char_whitelist=0123456789"
             try:
                 text = pytesseract.image_to_string(crop, config=config, timeout=1.5)

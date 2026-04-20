@@ -1,7 +1,8 @@
 import ctypes
+import math
 import time
 import keyboard
-from config import KEYS, THRESHOLDS, TIMINGS, Thresholds
+from config import KEYS, POTIONS, THRESHOLDS, TIMINGS, PotionConfig, Thresholds
 
 
 INPUT_KEYBOARD = 1
@@ -30,8 +31,13 @@ class INPUT(ctypes.Structure):
 
 
 class TriggerController:
-    def __init__(self, thresholds: Thresholds = THRESHOLDS) -> None:
+    def __init__(
+        self,
+        thresholds: Thresholds = THRESHOLDS,
+        potions: PotionConfig = POTIONS,
+    ) -> None:
         self._thresholds = thresholds
+        self._potions = potions
         self._actions_enabled = True
         self._last_action_times = {
             KEYS.hp_key: 0.0,
@@ -50,7 +56,12 @@ class TriggerController:
         return self._actions_enabled
 
     def _can_fire(self, key: str) -> bool:
-        return (time.time() - self._last_action_times[key]) >= TIMINGS.action_cooldown_seconds
+        cooldown = TIMINGS.action_cooldown_seconds
+        if key == KEYS.hp_key:
+            cooldown = TIMINGS.hp_action_cooldown_seconds
+        elif key == KEYS.mp_key:
+            cooldown = TIMINGS.mp_action_cooldown_seconds
+        return (time.time() - self._last_action_times[key]) >= cooldown
 
     def _send_key(self, key: str) -> None:
         try:
@@ -145,10 +156,47 @@ class TriggerController:
         self._last_action_times[key] = time.time()
         print(f"ACTION: pressed {key} because {reason}")
 
-    def evaluate(self, hp_current: int | None = None, mp_current: int | None = None) -> None:
-        if hp_current is not None:
+    def _fire_burst(self, key: str, presses: int, reason: str) -> None:
+        if not self._actions_enabled:
+            return
+        if not self._can_fire(key):
+            return
+
+        total_presses = max(1, int(presses))
+        for press_index in range(total_presses):
+            self._send_key(key)
+            if press_index < total_presses - 1:
+                time.sleep(TIMINGS.key_hold_seconds)
+        self._last_action_times[key] = time.time()
+        print(f"ACTION: pressed {key} x{total_presses} because {reason}")
+
+    def _hp_presses_needed(self, hp_current: int, hp_max: int) -> int:
+        missing_hp = max(0, hp_max - hp_current)
+        if missing_hp <= 0:
+            return 0
+        potion_heal = max(1, self._potions.hp_potion_heal_amount)
+        raw_presses = math.ceil(missing_hp / potion_heal)
+        return max(1, min(self._potions.hp_burst_max_presses, raw_presses))
+
+    def evaluate(
+        self,
+        hp_current: int | None = None,
+        hp_max: int | None = None,
+        mp_current: int | None = None,
+        mp_max: int | None = None,
+    ) -> None:
+        if hp_current is not None and hp_max is not None:
             if hp_current <= self._thresholds.hp_trigger_at_or_below:
-                self._fire(KEYS.hp_key, f"hp <= {self._thresholds.hp_trigger_at_or_below} (hp={hp_current})")
+                presses_needed = self._hp_presses_needed(hp_current, hp_max)
+                self._fire_burst(
+                    KEYS.hp_key,
+                    presses_needed,
+                    (
+                        f"hp <= {self._thresholds.hp_trigger_at_or_below} "
+                        f"(hp={hp_current}/{hp_max}, potion={self._potions.hp_potion_name}, "
+                        f"heal={self._potions.hp_potion_heal_amount})"
+                    ),
+                )
 
         if mp_current is not None:
             if mp_current <= self._thresholds.mp_trigger_at_or_below:

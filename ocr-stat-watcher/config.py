@@ -7,18 +7,34 @@ ROOT_DIR = Path(__file__).resolve().parent
 
 @dataclass(frozen=True)
 class Thresholds:
-    hp_trigger_at_or_below: int = 550
-    hp_reset_above: int = 650
-    mp_trigger_at_or_below: int = 200
-    mp_reset_above: int = 350
+    hp_trigger_at_or_below: int = 650
+    hp_reset_above: int = 750
+    mp_trigger_at_or_below: int = 300
+    mp_reset_above: int = 450
+
+
+@dataclass(frozen=True)
+class PotionConfig:
+    hp_potion_name: str = "p2"
+    hp_potion_heal_amount: int = 240
+    hp_burst_max_presses: int = 4
 
 
 @dataclass(frozen=True)
 class Timings:
     poll_interval_seconds: float = 0.10
     action_cooldown_seconds: float = 1.00
+    hp_action_cooldown_seconds: float = 0.20
+    mp_action_cooldown_seconds: float = 0.20
     stable_reads_required: int = 1
     key_hold_seconds: float = 0.05
+    suspicious_low_confirmation_reads: int = 2
+    hp_suspicious_low_confirmation_reads: int = 1
+    mp_suspicious_low_confirmation_reads: int = 1
+    suspicious_low_ratio: float = 0.20
+    suspicious_low_min_delta: int = 35
+    max_value_jump_ratio: float = 1.5
+    max_change_confirmation_reads: int = 1
 
 
 @dataclass(frozen=True)
@@ -28,6 +44,10 @@ class OCRConfig:
     whitelist: str = "0123456789/"
     upscale_factor: int = 4
     threshold_value: int = 130
+    hp_upscale_factor: int = 4
+    hp_threshold_value: int = 130
+    mp_upscale_factor: int = 5
+    mp_threshold_value: int = 136
 
 
 @dataclass(frozen=True)
@@ -136,6 +156,7 @@ class ProfileConfig:
 
 
 THRESHOLDS = Thresholds()
+POTIONS = PotionConfig()
 TIMINGS = Timings()
 OCR = OCRConfig()
 KEYS = ActionKeys()

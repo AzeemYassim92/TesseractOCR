@@ -108,7 +108,25 @@ class AutoTargetingController:
 
         selected_target = select_attack_target(targets)
         clicked_at = None
-        if selected_target is not None and self._pending_attack_target_id is None:
+        if self._pending_attack_target_id is None:
+            retaliation_result = self._attacker.right_click_near_player()
+            clicked_at = retaliation_result.screen_position
+            if retaliation_result.clicked and clicked_at is not None:
+                self._pending_attack_started_at = now
+                self._pending_player_activity = False
+                print(
+                    f"RETALIATE: right-clicked near player "
+                    f"{retaliation_result.clicks_sent}x at screen={clicked_at} "
+                    f"cursor={retaliation_result.cursor_validation.label if retaliation_result.cursor_validation else None} "
+                    f"score={retaliation_result.cursor_validation.score if retaliation_result.cursor_validation else 0:.2f}"
+                )
+            elif retaliation_result.reason == "missing_cursor_templates":
+                print(
+                    "SKIP: cursor validation is enabled, but no cursor templates were found in "
+                    f"{CONFIG.cursor_templates_dir}"
+                )
+
+        if selected_target is not None and self._pending_attack_target_id is None and clicked_at is None:
             attack_result = self._attacker.right_click_target(selected_target)
             clicked_at = attack_result.screen_position
             if attack_result.clicked and clicked_at is not None:

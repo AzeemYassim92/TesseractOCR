@@ -38,12 +38,15 @@ class AutoTargetingConfig:
     attack_click_cooldown_seconds: float = 1.00
     attack_repeat_clicks: int = 4
     attack_repeat_interval_seconds: float = 0.55
-    attack_success_pause_seconds: float = 3.5
+    attack_success_pause_seconds: float = 5.5
     attack_confirm_window_seconds: float = 1.0
     cursor_validation_enabled: bool = True
     cursor_validation_confidence: float = 0.62
-    cursor_validation_crop_size: int = 72
+    cursor_validation_crop_size: int = 112
     cursor_hover_seconds: float = 0.08
+    target_scan_padding_pixels: int = 6
+    player_cursor_scan_radius_pixels: int = 78
+    player_cursor_scan_step_pixels: int = 24
     player_activity_threshold: int = 18
     player_activity_min_pixels: int = 80
     rejected_target_cooldown_seconds: float = 20.0

@@ -35,6 +35,8 @@ AutoTargeting can also be toggled from the main OCR watcher with `W`.
 - Ignores attack targets farther than the configured player threat radius.
 - Prioritizes moving targets near the player over far-away template matches.
 - Hovers candidate points and checks for an attack cursor before clicking.
+- Scans a wider set of points around each candidate box before giving up on cursor validation.
+- Also sweeps around the player character for the attack cursor, which helps retaliate when monsters are already on top of you.
 - Right-clicks a validated point multiple times when attack mode is enabled.
 - Waits for `attack_success_pause_seconds` after a validated attack burst before trying another attack.
 - Green target boxes are moving, amber target boxes are remembered but currently idle, and gray is reserved for attacked targets that stopped moving.
